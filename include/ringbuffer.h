@@ -9,7 +9,10 @@
         buffer size 128: 6.5ms
     Buffer size larger than 128 might cause problems with RAM overflow.
 */
-#define BUFFER_SIZE 16
+
+#ifndef BUFFER_SIZE
+    #define BUFFER_SIZE 16
+#endif
 
 volatile uint16_t ringBuffer[BUFFER_SIZE];
 volatile uint8_t  bufferCount = 0;
