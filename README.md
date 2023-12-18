@@ -8,7 +8,7 @@ The ATtiny85 is very limited compared to other microcontroller having some of th
 - 512 EEPROM
 - 2 timers
 
-The project uses two of the available timers, one for PWM output and one for keeping a consistent sample rate. With 512B of SRAM it is very limited what kind of recursive processing that can be done. The ADC is properly the biggest bottleneck in this project not being able to read with the same speed that the MCU can output samples. Below is a plot showing the frequency response when sweeping a sine wave from _200Hz_ to _40kHz_. Note that this measurement was done without any filtering after the pwm, which would also further dampen the signal. The plot shows that we can get quite a good response up to at least _2kHz_, and this by only running _8MHz_.
+The project uses two of the available timers, one for PWM output and one for keeping a consistent sample rate. With 512B of SRAM it is very limited what kind of recursive processing that can be done. The ADC is properly the biggest bottleneck in this project not being able to read with the same speed that the MCU can output samples. Below is a plot showing the frequency response when sweeping a sine wave from _200Hz_ to _40kHz_. Note that this measurement was done without any filtering after the pwm, which would also further dampen the signal. The plot shows that we can get quite a good response up to at least _16kHz_.
 
 <p align="center">
 <img 
