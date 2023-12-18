@@ -80,8 +80,8 @@ ISR(TIMER0_COMPA_vect) {
         OCR1B = sample;
     #else
         // output value to PWM
-        OCR1A = sample/2;
-        OCR1B = sample/2;
+        OCR1A = sample;
+        OCR1B = sample;
         sampleRead = true;
     #endif
 }
