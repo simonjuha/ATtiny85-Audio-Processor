@@ -9,12 +9,12 @@
 #include "attiny-audio-processor.h"
 
 // custom process function
-void gain(uint16_t& input) {
+void gain(uint8_t& input) {
     input = input * 2;
 }
 
 int main() {
-    init_attiny85_audio_processor(gain);
+    init_attiny85_audio_processor(nullptr);
 
     /* Main Loop */
     while (1)

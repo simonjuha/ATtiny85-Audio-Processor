@@ -6,16 +6,16 @@
 #include <avr/interrupt.h>
 
 volatile bool sampleRead = true;  // Flag for when a sample has been read by Timer0 ISR
-volatile uint16_t tempSample = 0; // Temporary sample value that has not yet been processed
-volatile uint16_t sample = 0;     // Sample value to be send to PWM
+volatile uint8_t tempSample = 0; // Temporary sample value that has not yet been processed
+volatile uint8_t sample = 0;     // Sample value to be send to PWM
 
-typedef void (*UserFunctionType)(uint16_t& input); // Function pointer type
+typedef void (*UserFunctionType)(uint8_t& input); // Function pointer type
 extern UserFunctionType process = nullptr;         // function called in main loop
 
 // initialize the audio processor. pass a function pointer to the function that should be called in the main loop
 void init_attiny85_audio_processor(UserFunctionType processFunction){
     // set the process function to the passed function pointer, or to a default function that does nothing (pass through)
-    process = processFunction != nullptr ? processFunction : [](uint16_t& input){}; // do nothing
+    process = processFunction != nullptr ? processFunction : [](uint8_t& input){}; // do nothing
 
     /* -------- PWM setup (Timer1) -------- */
     DDRB |= 1<<PB1;                         // Enable PWM output pins
@@ -54,7 +54,7 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
 // process the audio signal. call this function in the main loop
 void processAudio() {
     if(sampleRead) {
-        uint16_t tempSample = ADC >> 2;
+        uint8_t tempSample = ADC >> 2;
 
         // Call the function pointer
         process(tempSample);
