@@ -9,9 +9,12 @@
 #define F_CPU 8000000UL // 8 MHz
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "ringbuffer.h" 
 
 #define PASSTHROUGH 0
+
+volatile bool sampleRead = true;  // Flag for when a sample has been read by Timer0 ISR
+volatile uint16_t tempSample = 0; // Temporary sample value that has not yet been processed
+volatile uint16_t sample = 0;     // Sample value to be send to PWM
 
 // main loop
 int main() {
@@ -52,14 +55,18 @@ int main() {
     while (1)
     {
         #if PASSTHROUGH
-            uint16_t adcValue = ADC >> 2;
-            writeToBuffer(adcValue);
+            sample = ADC >> 2;
         #else
-        uint16_t adcValue = ADC >> 2;
 
-        /* PROCESS VALUE... */
+        if(sampleRead) {
+            tempSample = ADC >> 2;
 
-        writeToBuffer(adcValue);
+            /* PROCESS VALUE... */
+
+            sample = tempSample;
+            sampleRead = false;
+        }
+
         #endif
     }
 
@@ -69,14 +76,12 @@ int main() {
 // sample rate = 8 MHz / (1 * (1 + 24)) = 320 kHz
 ISR(TIMER0_COMPA_vect) {
     #if PASSTHROUGH
-        uint16_t value = ADC >> 2;
-        OCR1A = value;
-        OCR1B = value;
+        OCR1A = sample;
+        OCR1B = sample;
     #else
-        // input from buffer
-        uint16_t value = readFromBuffer();
         // output value to PWM
-        OCR1A = value;
-        OCR1B = value;
+        OCR1A = sample/2;
+        OCR1B = sample/2;
+        sampleRead = true;
     #endif
 }

@@ -2,6 +2,8 @@
 #include <stdint.h>
 
 /*
+    THIS RINGBUFFER IS OBSOLETE AND DOES NOT HAVE ANY USE IN THE CURRENT PROJECT.
+
     The size of the buffer will affect the latency.
         buffer size 16 : 1ms
         buffer size 32 : 1.7ms
