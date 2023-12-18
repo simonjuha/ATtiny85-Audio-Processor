@@ -5,9 +5,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-volatile bool sampleRead = true;  // Flag for when a sample has been read by Timer0 ISR
+volatile bool sampleRead = true; // Flag for when a sample has been read by Timer0 ISR
 volatile uint8_t tempSample = 0; // Temporary sample value that has not yet been processed
 volatile uint8_t sample = 0;     // Sample value to be send to PWM
+uint8_t sample_2lsb = 0;         // 2 least significant bits of 10 bit ADC value
 
 typedef void (*UserFunctionType)(uint8_t& input); // Function pointer type
 extern UserFunctionType process = nullptr;         // function called in main loop
@@ -54,7 +55,8 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
 // process the audio signal. call this function in the main loop
 void processAudio() {
     if(sampleRead) {
-        uint8_t tempSample = ADC >> 2;
+        uint8_t tempSample = ADC >> 2;  // MSB 8 bit ADC value
+        sample_2lsb = ADC & 0x03;       // 2 LSB of 10 bit ADC value
 
         // Call the function pointer
         process(tempSample);
