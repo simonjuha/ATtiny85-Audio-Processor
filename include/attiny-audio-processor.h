@@ -1,7 +1,7 @@
 #ifndef ATTINY_AUDIO_PROCESSOR_H
 #define ATTINY_AUDIO_PROCESSOR_H
 
-#define F_CPU 8000000UL // 8 MHz
+#define F_CPU 16000000UL // 16 MHz
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -18,14 +18,22 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
     // set the process function to the passed function pointer, or to a default function that does nothing (pass through)
     process = processFunction != nullptr ? processFunction : [](uint8_t& input){}; // do nothing
 
+    // remember to set fueses to use PLL:
+    // lfuse = 0xC1
+    // hfuse = 0xD4
+    CLKPR = (1 << CLKPCE);  // Enable changes to CLKPR (changing bit 7 to enable changes to the other bits)
+    CLKPR = 0;              // Set the clock division to 1 (no division)
+
     /* -------- PWM setup (Timer1) -------- */
+    // PWM frequency formula: F_CPU / (prescale * (1 + OCR1))
+
     DDRB |= 1<<PB1;                         // Enable PWM output pins
     PLLCSR = 1<<PCKE | 1<<PLLE;             // Enable PLL
     TCCR1 = 1<<PWM1A | 2<<COM1A0 | 1<<CS10; // PWM A, clear on match, 1:1 prescale
 
     /* -------- Timer setup (Timer0) -------- */
     // Output sample rate formula: F_CPU / (prescale * (1 + OCR0A))
-    // 8 MHz / ( 1 * (1 * 24) ) = 320 kHz
+    // 16 MHz / ( 1 * (1 + 23) ) = 666.666 kHz
     TCCR0A = 3<<WGM00;              // Fast PWM
     TCCR0B = 1<<WGM02;              // Fast PWM
     // CS 0:2 bits in TCCR0B sets the prescale
@@ -36,7 +44,7 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
 
     /* -------- ADC setup -------- */
     // Input sample rate formula: F_CPU / (prescale * (1 + (ADCSRA & 0x07)))
-    // 8 MHz / (8 * 3) = 333.333 kHz
+    // 16 MHz / (8 * 3) = 666.666 kHz
     DDRB &= ~(1<<PB4);              // Enable ADC input on pin 3 (A2/PB4)
     ADMUX = 0b00000010;             // Use ADC2
     ADCSRA = 1<<ADEN;               // Enable ADC
