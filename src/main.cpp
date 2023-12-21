@@ -8,23 +8,19 @@
 
 #include "attiny-audio-processor.h"
 
-// custom process function
-void gain(uint8_t& input) {
-    input = input * 2;
+// clip the input to the range -128 to 127
+void gainWithoutOverflow(int8_t& input) {
+    int16_t temp = input * 2;
+    input = temp > 127 ? 127 : temp < -128 ? -128 : temp;
 }
 
-// using sample_2lsb to get 10 bit ADC value
-void lsbTest(uint8_t& input) {
-    uint16_t sample_10bit = (input<<2) + sample_2lsb;
-    if(sample_10bit > 512) {
-        input = 255;
-    } else {
-        input = input - (sample_2lsb<<2);
-    }
+// let gain overflow
+void gainWithOverflow(int8_t& input) {
+    input *= 2;
 }
 
 int main() {
-    init_attiny85_audio_processor(lsbTest);
+    init_attiny85_audio_processor(gainWithoutOverflow);
 
     /* Main Loop */
     while (1)

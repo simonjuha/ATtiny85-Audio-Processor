@@ -5,18 +5,18 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-volatile bool sampleRead = true; // Flag for when a sample has been read by Timer0 ISR
-volatile uint8_t tempSample = 0; // Temporary sample value that has not yet been processed
-volatile uint8_t sample = 0;     // Sample value to be send to PWM
-uint8_t sample_2lsb = 0;         // 2 least significant bits of 10 bit ADC value
+volatile bool sampleRead = true;// Flag for when a sample has been read by Timer0 ISR
+int8_t tempSample = 0; // Temporary sample value that has not yet been processed
+volatile int8_t sample = 0;     // Sample value to be send to PWM
+int8_t sample_2lsb = 0;         // 2 least significant bits of 10 bit ADC value
 
-typedef void (*UserFunctionType)(uint8_t& input); // Function pointer type
+typedef void (*UserFunctionType)(int8_t& input); // Function pointer type
 extern UserFunctionType process = nullptr;         // function called in main loop
 
 // initialize the audio processor. pass a function pointer to the function that should be called in the main loop
 void init_attiny85_audio_processor(UserFunctionType processFunction){
     // set the process function to the passed function pointer, or to a default function that does nothing (pass through)
-    process = processFunction != nullptr ? processFunction : [](uint8_t& input){}; // do nothing
+    process = processFunction != nullptr ? processFunction : [](int8_t& input){}; // do nothing
 
     // remember to set fueses to use PLL:
     // lfuse = 0xC1
@@ -63,13 +63,14 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
 // process the audio signal. call this function in the main loop
 void processAudio() {
     if(sampleRead) {
-        uint8_t tempSample = ADC >> 2;  // MSB 8 bit ADC value
-        sample_2lsb = ADC & 0x03;       // 2 LSB of 10 bit ADC value
+        int16_t centeredReading = ADC - 512; // Center the reading around 0
+        int8_t scaledReading = centeredReading >> 2; // Scale to -128 to 127 range
+        sample_2lsb = (scaledReading < 0 ? -scaledReading : scaledReading) & 0b11; // Get the 2 least significant bits of the 10 bit ADC value
 
         // Call the function pointer
-        process(tempSample);
+        process(scaledReading);
 
-        sample = tempSample;
+        sample = scaledReading;
         sampleRead = false;
     }
 }
@@ -77,7 +78,7 @@ void processAudio() {
 // interrupt sample rate = 8 MHz / (1 * (1 + 24)) = 320 kHz
 ISR(TIMER0_COMPA_vect) {
     // output value to PWM
-    OCR1A = sample;
+    OCR1A = sample + 128; // 
     sampleRead = true;
 }
 
