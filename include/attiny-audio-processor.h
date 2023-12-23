@@ -1,17 +1,24 @@
 #ifndef ATTINY_AUDIO_PROCESSOR_H
 #define ATTINY_AUDIO_PROCESSOR_H
 
-#define F_CPU 16000000UL // 16 MHz
+#define F_CPU 16000000UL  // 16 MHz
+#define SAMPLE_RATE 80000 // 80 kHz
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-volatile bool sampleRead = true;// Flag for when a sample has been read by Timer0 ISR
-int8_t tempSample = 0;          // Temporary sample value that has not yet been processed
-volatile int8_t sample = 0;     // Sample value to be send to PWM
-int8_t sample_2lsb = 0;         // 2 least significant bits of 10 bit ADC value
+#define MS_TIMER_TICKS SAMPLE_RATE / 1000
+
+volatile bool sampleRead = true;        // Flag for when a sample has been read by Timer0 ISR
+volatile int8_t sample = 0;             // Sample value to be send to PWM
+int8_t sample_2lsb = 0;                 // 2 least significant bits of 10 bit ADC value
+volatile static uint32_t timePassed = 0;// Milliseconds since start (can count up to 49.71 days)
 
 typedef void (*UserFunctionType)(int8_t& input); // Function pointer type
 extern UserFunctionType process = nullptr;         // function called in main loop
+
+uint32_t millis() {
+    return timePassed;
+}
 
 // initialize the audio processor. pass a function pointer to the function that should be called in the main loop
 void init_attiny85_audio_processor(UserFunctionType processFunction){
@@ -80,8 +87,13 @@ void processAudio() {
     }
 }
 
-// interrupt sample rate = 8 MHz / (1 * (1 + 24)) = 320 kHz
+// interrupt sample rate = 80 kHz
 ISR(TIMER0_COMPA_vect) {
+    static uint8_t msCounter = 0; // Counter for milliseconds
+    if(++msCounter == MS_TIMER_TICKS){
+        msCounter = 0;
+        timePassed++; // 1 ms has passed
+    }
     // output value to PWM
     OCR1A = sample + 128; // 
     sampleRead = true;
