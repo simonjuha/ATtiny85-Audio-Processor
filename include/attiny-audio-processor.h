@@ -33,13 +33,13 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
 
     /* -------- PWM setup (Timer1) -------- */
     // F_PWM = F_timer / (prescale * 256)
-    // 64 MHz / (1 * 256) = 250 kHz
+    // 64 MHz / (2 * 256) = 125 kHz
     DDRB |= 1<<PB1;     // Enable PWM output pins
     PLLCSR = 1<<PLLE;   // Enable PLL
     PLLCSR |= 1<<PCKE;  // Use 64 MHz PLL output as timer clock
     TCCR1 |= 1<<PWM1A;  // Enable PWM A
     TCCR1 |= 1<<COM1A1; // Clear OC1A on compare match
-    TCCR1 |= 1<<CS10;   // Set prescale to 1 (no prescale)
+    TCCR1 |= 1<<CS11;   // Set prescale to 2
     
     /* -------- Timer setup (Timer0) -------- */
     // Output sample rate formula: (F_CPU) / (prescale * (1 + OCR0A))
@@ -53,17 +53,18 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
     OCR0A  = 24;        // Compare value
 
     /* -------- ADC setup -------- */
-    // F_ADC: F_CPU / prescale = 16 MHz / 8 = 2 MHz
+    // F_ADC: F_CPU / prescale = 16 MHz / 16 = 1 MHz
     // (ATtiny85 conversion time is approx. 13.5 ADC clock cycles)
-    // ADC sample rate: 2 MHz / 13.5 = 148 kHz = 1/6.757 us
+    // ADC sample rate: 1 MHz / 13.5 = 74.07 kHz 
 
     DDRB &= ~(1<<PB4);      // Enable ADC input on pin 3 (A2/PB4)
     ADMUX = 0b00000010;     // Use ADC2
     ADCSRA = 1<<ADEN;       // Enable ADC
     ADCSRA |= 1<<ADATE;     // Enable auto trigger
+    ADCSRA |= 1<<ADPS1 | 1<<ADPS0; // Set prescale to 8
     // ADPS 0:2 bits in ADCSRA sets the prescale
     // 0b000: 2, 0b001: 2, 0b010: 4, 0b011: 8, 0b100: 16, 0b101: 32, 0b110: 64, 0b111: 128
-    ADCSRB |= 1<<ADPS1 | 1<<ADPS0;  // Set prescale to 8
+    ADCSRB |= 1<<ADTS1 | 1<<ADTS0;  // Set trigger source to Timer0 compare match A
     ADCSRB = 1<<ACME;       // Enable analog comparator multiplexer
     DIDR0 |= 1<<ADC1D;      // Disable digital input on ADC2
     ADCSRA |= 1<<ADSC;      // Start conversion

@@ -20,7 +20,7 @@ void gainWithOverflow(int8_t& input) {
 }
 
 int main() {
-    init_attiny85_audio_processor(gainWithoutOverflow);
+    init_attiny85_audio_processor(nullptr);
 
     /* Main Loop */
     while (1)
