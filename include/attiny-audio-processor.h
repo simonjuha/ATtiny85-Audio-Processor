@@ -56,7 +56,6 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
     // F_ADC: F_CPU / prescale = 16 MHz / 16 = 1 MHz
     // (ATtiny85 conversion time is approx. 13.5 ADC clock cycles)
     // ADC sample rate: 1 MHz / 13.5 = 74.07 kHz 
-
     DDRB &= ~(1<<PB4);      // Enable ADC input on pin 3 (A2/PB4)
     ADMUX = 0b00000010;     // Use ADC2
     ADCSRA = 1<<ADEN;       // Enable ADC
@@ -67,8 +66,11 @@ void init_attiny85_audio_processor(UserFunctionType processFunction){
     ADCSRB |= 1<<ADTS1 | 1<<ADTS0;  // Set trigger source to Timer0 compare match A
     ADCSRB = 1<<ACME;       // Enable analog comparator multiplexer
     DIDR0 |= 1<<ADC1D;      // Disable digital input on ADC2
-    ADCSRA |= 1<<ADSC;      // Start conversion
-    
+    ADCSRA |= 1<<ADSC;      // Start conversion    
+
+    /* ------- CLIPPING LED -------- */
+    DDRB |= 1<<PB2; // Set pin 7 (PB2) as output
+    PORTB &= ~(1<<PB2); // Set pin 7 low
 
     sei(); // Enable interrupts
 }
@@ -85,6 +87,12 @@ void processAudio() {
 
         sample = scaledReading;
         sampleRead = false;
+    }
+    // Light clipping LED if above 1000 or below 24
+    if(ADC > 1000 || ADC < 24) {
+        PORTB |= 1<<PB2; // Set pin 7 high
+    } else {
+        PORTB &= ~(1<<PB2); // Set pin 7 low
     }
 }
 
